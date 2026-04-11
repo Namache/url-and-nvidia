@@ -21,7 +21,7 @@ Installs [Claude Desktop](https://claude.ai/download) on [Bazzite](https://bazzi
 
 ```bash
 git clone <repo-url>
-cd PenTestStack
+cd Bazzite-ClaudeDesktop
 ./setup.sh
 ```
 
