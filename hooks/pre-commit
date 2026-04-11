@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# pre-commit — Runs lint checks before every commit.
+# Installed by hooks/install-hooks.sh
+set -euo pipefail
+
+exec "$(git rev-parse --show-toplevel)/tests/lint.sh"
