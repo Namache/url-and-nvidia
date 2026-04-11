@@ -21,6 +21,9 @@ Checks all `.sh` files with shellcheck and validates all `.json` files with `pyt
 | `config/claude_desktop_config.json` | MCP filesystem server template — copied to `~/.config/claude/` |
 | `tests/lint.sh` | Shell + JSON linting |
 
+## Test Driven Development
+When building or planning a new feature, the first step should be to build or update a test, to ensure the end goal is met, if at all possible. When the build is finished, the test should pass. Tests should be added to the git actions that run on merge to main. Tests may be lint checks, syntax validation, or functional/integration tests as appropriate to the change.
+
 ## Development Notes
 
 - All scripts must pass `shellcheck` with no warnings before committing (enforced by pre-commit hook and CI)
