@@ -19,3 +19,6 @@ jobs:
 
       - name: Run lint tests
         run: bash tests/lint.sh
+
+      - name: Run dependency checks
+        run: bash tests/check-deps.sh
