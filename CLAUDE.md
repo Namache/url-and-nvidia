@@ -32,3 +32,10 @@ When building or planning a new feature, the first step should be to build or up
 - Claude Desktop is installed via the community APT repo (`aaddrick/claude-desktop-debian`); the repo URL is a variable at the top of `scripts/install-in-container.sh` — update it there if the source changes
 - Do not overwrite `~/.config/claude/claude_desktop_config.json` if it already exists (user may have customized it)
 - The git hooks in `hooks/` are wired up by `hooks/install-hooks.sh`, which is called by `setup.sh`
+
+## Container Runtime Notes
+
+- The Claude Desktop binary is `claude-desktop`, not `claude`. The `claude` command inside the container resolves to the Claude Code CLI if it is installed there — never use it to launch the GUI app.
+- Electron requires `libasound2t64` (ALSA) in the Ubuntu 24.04 container. Without it, `claude-desktop` exits silently with no window or error message.
+- When debugging silent launch failures, check `~/.cache/claude-desktop-debian/launcher.log` — the launcher script redirects all Electron output there.
+- Use `ldd /usr/lib/claude-desktop/node_modules/electron/dist/electron | grep "not found"` inside the container to detect any future missing shared-library dependencies.

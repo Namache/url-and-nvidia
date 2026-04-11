@@ -46,7 +46,7 @@ That's it. The script will:
 From your app grid, or from a terminal:
 
 ```bash
-distrobox enter --name claude-desktop -- claude
+distrobox enter --name claude-desktop -- claude-desktop
 ```
 
 ---
@@ -175,6 +175,24 @@ distrobox enter --name claude-desktop -- ls /mnt/git
 
 ---
 
+### Claude Desktop exits silently with no window
+
+Electron dependency missing — check the launcher log:
+
+```bash
+cat ~/.cache/claude-desktop-debian/launcher.log
+```
+
+A common cause is a missing shared library (e.g. `libasound.so.2: cannot open shared object file`). Re-running `./setup.sh` installs the full dependency list including `libasound2t64`. If you created the container before this fix was added, the quickest path is to re-run the install script directly:
+
+```bash
+distrobox enter --name claude-desktop -- sudo apt-get install -y libasound2t64
+```
+
+> **Note:** The `claude` command inside the container is the Claude Code CLI — the correct binary for Claude Desktop is `claude-desktop`.
+
+---
+
 ### Claude Desktop won't launch / blank window
 
 **Wayland issue** — check that `ELECTRON_OZONE_PLATFORM_HINT=auto` is in the `.desktop` file:
@@ -186,7 +204,7 @@ grep ELECTRON ~/.local/share/applications/claude.desktop
 If it's missing, re-run `./setup.sh` to re-apply the patch, or force X11 as a workaround:
 
 ```bash
-distrobox enter --name claude-desktop -- env DISPLAY=:0 claude
+distrobox enter --name claude-desktop -- env DISPLAY=:0 claude-desktop
 ```
 
 ---

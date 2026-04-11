@@ -215,7 +215,7 @@ if [[ "${ENABLE_LOGGING}" == "true" ]]; then
 fi
 echo ""
 echo "  Launch from terminal:"
-echo "    distrobox enter --name ${CONTAINER_NAME} -- claude"
+echo "    distrobox enter --name ${CONTAINER_NAME} -- claude-desktop"
 echo ""
 echo "  To update Claude Desktop, re-run: ./setup.sh"
 echo ""

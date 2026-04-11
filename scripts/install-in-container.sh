@@ -29,6 +29,7 @@ sudo apt-get install -y --no-install-recommends \
     curl \
     ca-certificates \
     gnupg \
+    libasound2t64 \
     libatk1.0-0 \
     libatk-bridge2.0-0 \
     libcups2 \
