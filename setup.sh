@@ -17,9 +17,20 @@ fi
 CONTAINER_NAME="${CONTAINER_NAME:-claude-desktop}"
 CONTAINER_IMAGE="${CONTAINER_IMAGE:-ubuntu:24.04}"
 MOUNT_DIRS="${MOUNT_DIRS:-/mnt/git}"
+ENABLE_LOGGING="${ENABLE_LOGGING:-false}"
+LOG_FILE="${LOG_FILE:-${HOME}/.cache/claude-desktop-setup.log}"
 
 # Split MOUNT_DIRS into an array on whitespace
 read -ra MOUNT_DIRS_ARRAY <<< "${MOUNT_DIRS}"
+
+# ---------------------------------------------------------------------------
+# Logging (tee to file when ENABLE_LOGGING=true)
+# ---------------------------------------------------------------------------
+if [[ "${ENABLE_LOGGING}" == "true" ]]; then
+    mkdir -p "$(dirname "${LOG_FILE}")"
+    exec > >(tee -a "${LOG_FILE}") 2>&1
+    echo "=== Setup run: $(date) ===" >> "${LOG_FILE}"
+fi
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -199,6 +210,9 @@ echo "  App launcher:   ${DESKTOP_FILE:-~/.local/share/applications/claude.deskt
 echo "  MCP config:     ${MCP_CONFIG_FILE}"
 echo "  Mounted dirs:   ${MOUNT_DIRS_ARRAY[*]}"
 echo "  Git hooks:      pre-commit (shellcheck + JSON lint)"
+if [[ "${ENABLE_LOGGING}" == "true" ]]; then
+    echo "  Log file:       ${LOG_FILE}"
+fi
 echo ""
 echo "  Launch from terminal:"
 echo "    distrobox enter --name ${CONTAINER_NAME} -- claude"
