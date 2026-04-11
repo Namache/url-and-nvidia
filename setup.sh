@@ -91,34 +91,60 @@ distrobox enter --name "${CONTAINER_NAME}" -- bash "${INSTALL_SCRIPT}"
 info "In-container install complete."
 
 # ---------------------------------------------------------------------------
-# 4. Install MCP config (preserve existing user config)
+# 4. MCP configuration — merge-safe update
+#
+#    setup.sh owns exactly one key: mcpServers.filesystem.
+#    Every other MCP server in the config is user-managed and is never touched.
+#
+#    Resolution order for the starting config:
+#      1. Existing installed config  (~/.config/claude/claude_desktop_config.json)
+#      2. Local repo template        (config/claude_desktop_config.json, git-ignored)
+#      3. Empty object               (fresh install, no template)
+#
+#    The filesystem entry is always written/updated with current MOUNT_DIRS.
 # ---------------------------------------------------------------------------
 header "=== MCP configuration ==="
 
 MCP_CONFIG_DIR="${HOME}/.config/claude"
 MCP_CONFIG_FILE="${MCP_CONFIG_DIR}/claude_desktop_config.json"
+LOCAL_MCP_CONFIG="${SCRIPT_DIR}/config/claude_desktop_config.json"
+MCP_CONFIG_TMP="${MCP_CONFIG_FILE}.tmp"
 mkdir -p "${MCP_CONFIG_DIR}"
 
-if [[ -f "${MCP_CONFIG_FILE}" ]]; then
-    warn "MCP config already exists at ${MCP_CONFIG_FILE} — not overwriting."
-    warn "To regenerate from current MOUNT_DIRS, delete it and re-run: ./setup.sh"
-else
-    info "Generating MCP config with directories: ${MOUNT_DIRS_ARRAY[*]}"
-    python3 -c "
-import json, sys
-dirs = sys.argv[1:]
-config = {
-    'mcpServers': {
-        'filesystem': {
-            'command': 'npx',
-            'args': ['-y', '@modelcontextprotocol/server-filesystem'] + dirs
-        }
-    }
+python3 -c "
+import json, sys, os
+
+config_path   = sys.argv[1]
+template_path = sys.argv[2]
+dirs          = sys.argv[3:]
+
+if os.path.exists(config_path):
+    with open(config_path) as f:
+        config = json.load(f)
+    source = 'existing config'
+elif template_path and os.path.exists(template_path):
+    with open(template_path) as f:
+        config = json.load(f)
+    source = 'local template'
+else:
+    config = {}
+    source = 'new config'
+
+if 'mcpServers' not in config:
+    config['mcpServers'] = {}
+
+config['mcpServers']['filesystem'] = {
+    'command': 'npx',
+    'args': ['-y', '@modelcontextprotocol/server-filesystem'] + dirs
 }
-print(json.dumps(config, indent=2))
-" "${MOUNT_DIRS_ARRAY[@]}" > "${MCP_CONFIG_FILE}"
-    info "MCP config installed to ${MCP_CONFIG_FILE}"
-fi
+
+print(json.dumps(config, indent=2), end='')
+print('', file=sys.stderr)
+print(f'MCP config updated (source: {source}, filesystem dirs: {dirs})', file=sys.stderr)
+" "${MCP_CONFIG_FILE}" "${LOCAL_MCP_CONFIG}" "${MOUNT_DIRS_ARRAY[@]}" \
+    > "${MCP_CONFIG_TMP}"
+mv "${MCP_CONFIG_TMP}" "${MCP_CONFIG_FILE}"
+info "MCP config written to ${MCP_CONFIG_FILE} (filesystem entry updated; all other servers preserved)"
 
 # ---------------------------------------------------------------------------
 # 5. Export Claude Desktop app to host desktop environment

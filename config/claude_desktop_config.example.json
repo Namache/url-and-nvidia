@@ -7,6 +7,13 @@
         "@modelcontextprotocol/server-filesystem",
         "/mnt/git"
       ]
+    },
+    "example-custom-server": {
+      "command": "npx",
+      "args": ["-y", "some-mcp-server-package"],
+      "env": {
+        "API_KEY": "replace-with-your-key"
+      }
     }
   }
 }

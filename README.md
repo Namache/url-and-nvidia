@@ -88,7 +88,26 @@ MOUNT_DIRS="/mnt/git /home/user/projects /mnt/data"
 
 ## MCP Configuration
 
-`setup.sh` generates `~/.config/claude/claude_desktop_config.json` automatically from your `MOUNT_DIRS` setting. With the default single-directory setup it looks like:
+The live config lives at `~/.config/claude/claude_desktop_config.json` — outside the repo, so it can never be accidentally committed.
+
+### How setup.sh manages the config
+
+`setup.sh` uses a **surgical merge** strategy on every run:
+
+- It **always updates** the `filesystem` MCP server entry with the paths from `MOUNT_DIRS` in `.env`
+- It **never touches** any other MCP server you have configured — API keys, custom args, and additional servers are preserved across every re-run
+
+The starting point for the config is resolved in this order:
+
+| Priority | Source | When used |
+|---|---|---|
+| 1 | Existing installed config | Re-runs — your customisations are the base |
+| 2 | `config/claude_desktop_config.json` (git-ignored) | First install with a local template |
+| 3 | Empty `{}` | Fresh install, no template |
+
+### Adding your own MCP servers
+
+Edit `~/.config/claude/claude_desktop_config.json` directly and restart Claude Desktop. `setup.sh` will leave your additions untouched on future runs:
 
 ```json
 {
@@ -96,28 +115,32 @@ MOUNT_DIRS="/mnt/git /home/user/projects /mnt/data"
     "filesystem": {
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-filesystem", "/mnt/git"]
-    }
-  }
-}
-```
-
-With multiple directories (e.g. `MOUNT_DIRS="/mnt/git /home/user/projects"`):
-
-```json
-{
-  "mcpServers": {
-    "filesystem": {
+    },
+    "my-server": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/mnt/git", "/home/user/projects"]
+      "args": ["-y", "my-mcp-package"],
+      "env": {
+        "API_KEY": "sk-..."
+      }
     }
   }
 }
 ```
 
-> **Note:** The setup script will not overwrite an existing config. To regenerate it from your current `MOUNT_DIRS`, delete the file and re-run:
-> ```bash
-> rm ~/.config/claude/claude_desktop_config.json && ./setup.sh
-> ```
+### Pre-seeding servers for a new install
+
+If you want additional MCP servers to be present on a fresh install (e.g. when setting up a new machine), copy the example template and add your servers there. It is git-ignored so credentials stay local:
+
+```bash
+cp config/claude_desktop_config.example.json config/claude_desktop_config.json
+$EDITOR config/claude_desktop_config.json
+```
+
+On a fresh install, `setup.sh` will use this file as the base and inject the `filesystem` entry on top. On subsequent runs the installed config takes precedence and the local template is ignored.
+
+### Updating `MOUNT_DIRS`
+
+Just edit `.env` and re-run `setup.sh` — the `filesystem` entry is always updated. No need to delete the config first.
 
 ---
 
@@ -201,13 +224,14 @@ Then refresh your app grid (log out/in or `killall gnome-shell` on GNOME).
 ## Repo Structure
 
 ```
-setup.sh                        # Run this on Bazzite to install everything
-example.env                     # Configuration template — copy to .env and edit
-.env                            # Your local config (git-ignored)
-scripts/install-in-container.sh # Runs inside the container (called by setup.sh)
-config/claude_desktop_config.json  # MCP config reference (setup.sh generates the real one)
-tests/lint.sh                   # shellcheck + JSON validation
-hooks/pre-commit                # Git pre-commit hook (runs lint.sh)
-hooks/install-hooks.sh          # Wires hooks/ into .git/hooks/
-.github/workflows/ci.yml        # CI: lint on push/PR to main
+setup.sh                                    # Run this on Bazzite to install everything
+example.env                                 # Config template — copy to .env and edit
+.env                                        # Your local config (git-ignored)
+config/claude_desktop_config.example.json   # MCP config reference template
+config/claude_desktop_config.json           # Local MCP config override (git-ignored)
+scripts/install-in-container.sh             # Runs inside the container (called by setup.sh)
+tests/lint.sh                               # shellcheck + JSON validation
+hooks/pre-commit                            # Git pre-commit hook (runs lint.sh)
+hooks/install-hooks.sh                      # Wires hooks/ into .git/hooks/
+.github/workflows/ci.yml                    # CI: lint on push/PR to main
 ```

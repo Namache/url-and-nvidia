@@ -18,8 +18,8 @@ Checks all `.sh` files with shellcheck and validates all `.json` files with `pyt
 |---|---|
 | `setup.sh` | Orchestrates everything — run on the Bazzite host |
 | `scripts/install-in-container.sh` | Installs Claude Desktop `.deb`, Node.js, MCP server inside Ubuntu 24.04 container |
-| `config/claude_desktop_config.example.json` | MCP config reference template |
-| `config/claude_desktop_config.json` | Local MCP config override (git-ignored) — if present, copied verbatim by `setup.sh` |
+| `config/claude_desktop_config.example.json` | MCP config reference / multi-server example |
+| `config/claude_desktop_config.json` | Local MCP config template (git-ignored) — used as the base on first install; setup.sh always overwrites only the `filesystem` entry |
 | `tests/lint.sh` | Shell + JSON linting |
 
 ## Test Driven Development
