@@ -146,6 +146,24 @@ Just edit `.env` and re-run `setup.sh` — the `filesystem` entry is always upda
 
 ## Troubleshooting
 
+### "Git is required for local sessions" when opening a local project
+
+Git was not installed in the container. Re-run setup to add it:
+
+```bash
+./setup.sh
+```
+
+Or install it directly without recreating the container:
+
+```bash
+distrobox enter --name claude-desktop -- sudo apt-get install -y git
+```
+
+Then restart Claude Desktop.
+
+---
+
 ### `distrobox: command not found`
 
 Distrobox ships with Bazzite but may not be in `PATH` for all shells. Try:
