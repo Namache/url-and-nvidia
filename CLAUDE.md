@@ -18,13 +18,24 @@ Checks all `.sh` files with shellcheck and validates all `.json` files with `pyt
 |---|---|
 | `setup.sh` | Orchestrates everything — run on the Bazzite host |
 | `scripts/install-in-container.sh` | Installs Claude Desktop `.deb`, Node.js, MCP server inside Ubuntu 24.04 container |
-| `config/claude_desktop_config.json` | MCP filesystem server template — copied to `~/.config/claude/` |
+| `config/claude_desktop_config.example.json` | MCP config reference / multi-server example |
+| `config/claude_desktop_config.json` | Local MCP config template (git-ignored) — used as the base on first install; setup.sh always overwrites only the `filesystem` entry |
 | `tests/lint.sh` | Shell + JSON linting |
+
+## Test Driven Development
+When building or planning a new feature, the first step should be to build or update a test, to ensure the end goal is met, if at all possible. When the build is finished, the test should pass. Tests should be added to the git actions that run on merge to main. Tests may be lint checks, syntax validation, or functional/integration tests as appropriate to the change.
 
 ## Development Notes
 
 - All scripts must pass `shellcheck` with no warnings before committing (enforced by pre-commit hook and CI)
 - `setup.sh` and `install-in-container.sh` must remain idempotent — safe to re-run
-- The Claude Desktop `.deb` download URL is a variable at the top of `scripts/install-in-container.sh` (`CLAUDE_DEB_URL`) — update it there if the URL changes
+- Claude Desktop is installed via the community APT repo (`aaddrick/claude-desktop-debian`); the repo URL is a variable at the top of `scripts/install-in-container.sh` — update it there if the source changes
 - Do not overwrite `~/.config/claude/claude_desktop_config.json` if it already exists (user may have customized it)
 - The git hooks in `hooks/` are wired up by `hooks/install-hooks.sh`, which is called by `setup.sh`
+
+## Container Runtime Notes
+
+- The Claude Desktop binary is `claude-desktop`, not `claude`. The `claude` command inside the container resolves to the Claude Code CLI if it is installed there — never use it to launch the GUI app.
+- Electron requires `libasound2t64` (ALSA) in the Ubuntu 24.04 container. Without it, `claude-desktop` exits silently with no window or error message.
+- When debugging silent launch failures, check `~/.cache/claude-desktop-debian/launcher.log` — the launcher script redirects all Electron output there.
+- Use `ldd /usr/lib/claude-desktop/node_modules/electron/dist/electron | grep "not found"` inside the container to detect any future missing shared-library dependencies.

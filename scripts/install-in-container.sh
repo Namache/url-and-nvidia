@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
 # install-in-container.sh — Runs INSIDE the claude-desktop Distrobox container.
-# Installs Claude Desktop (.deb) and the MCP filesystem server (Node.js).
+# Installs Claude Desktop (via APT repo) and the MCP filesystem server (Node.js).
 # Safe to re-run for updates.
 set -euo pipefail
 
-# Update this URL if Anthropic changes the download location.
-CLAUDE_DEB_URL="https://storage.googleapis.com/osprey-downloads-c02f6a0d-347c-492b-a752-3e0651722e97/latest/claude_latest_amd64.deb"
+# Community-maintained APT repository for Claude Desktop on Linux.
+# Source: https://github.com/aaddrick/claude-desktop-debian
+CLAUDE_APT_KEY_URL="https://aaddrick.github.io/claude-desktop-debian/KEY.gpg"
+CLAUDE_APT_REPO="deb [signed-by=/usr/share/keyrings/claude-desktop.gpg arch=amd64,arm64] https://aaddrick.github.io/claude-desktop-debian stable main"
+
 NODE_MIN_VERSION=18
 
 info() { echo "[INFO]  $*"; }
@@ -25,6 +28,8 @@ sudo apt-get install -y --no-install-recommends \
     wget \
     curl \
     ca-certificates \
+    gnupg \
+    libasound2t64 \
     libatk1.0-0 \
     libatk-bridge2.0-0 \
     libcups2 \
@@ -47,20 +52,26 @@ sudo apt-get install -y --no-install-recommends \
     xdg-utils
 
 # ---------------------------------------------------------------------------
-# 3. Download and install Claude Desktop
+# 3. Add Claude Desktop APT repository (idempotent)
 # ---------------------------------------------------------------------------
-info "Downloading Claude Desktop..."
-wget -q --show-progress -O /tmp/claude_latest_amd64.deb "${CLAUDE_DEB_URL}"
+info "Adding Claude Desktop APT repository..."
+curl -fsSL "${CLAUDE_APT_KEY_URL}" \
+    | sudo gpg --batch --yes --dearmor -o /usr/share/keyrings/claude-desktop.gpg
 
+echo "${CLAUDE_APT_REPO}" \
+    | sudo tee /etc/apt/sources.list.d/claude-desktop.list > /dev/null
+
+sudo apt-get update -qq
+
+# ---------------------------------------------------------------------------
+# 4. Install / upgrade Claude Desktop
+# ---------------------------------------------------------------------------
 info "Installing Claude Desktop..."
-# dpkg may fail on missing deps; apt-get install -f resolves them
-sudo dpkg -i /tmp/claude_latest_amd64.deb || sudo apt-get install -f -y
-
-rm -f /tmp/claude_latest_amd64.deb
+sudo apt-get install -y claude-desktop
 info "Claude Desktop installed: $(command -v claude || echo 'binary not in PATH — check /opt or /usr/bin')"
 
 # ---------------------------------------------------------------------------
-# 4. Install Node.js LTS (required for MCP server)
+# 5. Install Node.js LTS (required for MCP server)
 # ---------------------------------------------------------------------------
 node_needs_install=true
 
@@ -82,7 +93,7 @@ if [[ "${node_needs_install}" == "true" ]]; then
 fi
 
 # ---------------------------------------------------------------------------
-# 5. Install MCP filesystem server
+# 6. Install MCP filesystem server
 # ---------------------------------------------------------------------------
 info "Installing @modelcontextprotocol/server-filesystem..."
 sudo npm install -g @modelcontextprotocol/server-filesystem
