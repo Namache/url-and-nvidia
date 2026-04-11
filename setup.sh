@@ -86,8 +86,15 @@ fi
 header "=== Installing Claude Desktop inside container ==="
 
 INSTALL_SCRIPT="${SCRIPT_DIR}/scripts/install-in-container.sh"
-info "Running ${INSTALL_SCRIPT} inside '${CONTAINER_NAME}'..."
-distrobox enter --name "${CONTAINER_NAME}" -- bash "${INSTALL_SCRIPT}"
+# The repo may be cloned outside the home directory, which distrobox doesn't
+# mount automatically. Copy the install script to the home dir (always shared
+# with the container) so it's reachable at a known path from inside.
+INSTALL_SCRIPT_TMP="${HOME}/.cache/claude-desktop-install.sh"
+mkdir -p "${HOME}/.cache"
+cp "${INSTALL_SCRIPT}" "${INSTALL_SCRIPT_TMP}"
+info "Running install script inside '${CONTAINER_NAME}'..."
+distrobox enter --name "${CONTAINER_NAME}" -- bash "${INSTALL_SCRIPT_TMP}"
+rm -f "${INSTALL_SCRIPT_TMP}"
 info "In-container install complete."
 
 # ---------------------------------------------------------------------------
