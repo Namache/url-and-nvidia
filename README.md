@@ -3,7 +3,8 @@
 Installs [Claude Desktop](https://claude.ai/download) on [Bazzite](https://bazzite.gg/) (an immutable Fedora-based gaming/desktop OS) using a [Distrobox](https://distrobox.it/) container. Because Bazzite's host filesystem is read-only, the app runs inside an Ubuntu 24.04 container and is exported to the host desktop via `distrobox-export`.
 
 **Features**
-- MCP filesystem server pre-configured to browse repos at `/mnt/git`
+- MCP filesystem server pre-configured to browse repos at `/mnt/git` (configurable via `.env`)
+- Multiple directories supported — expose as many host paths as you need to Claude Desktop
 - Full internet + local LAN access (container shares host network namespace)
 - Wayland support out of the box (`ELECTRON_OZONE_PLATFORM_HINT=auto`)
 - Idempotent setup — re-run `./setup.sh` to update
@@ -13,7 +14,7 @@ Installs [Claude Desktop](https://claude.ai/download) on [Bazzite](https://bazzi
 ## Requirements
 
 - Bazzite (or any Fedora Silverblue/Kinoite-based OS with Distrobox pre-installed)
-- `/mnt/git` — mounted and accessible before launching Claude Desktop
+- `/mnt/git` (or whichever directories you configure) — mounted and accessible before running setup
 
 ---
 
@@ -21,7 +22,12 @@ Installs [Claude Desktop](https://claude.ai/download) on [Bazzite](https://bazzi
 
 ```bash
 git clone <repo-url>
-cd PenTestStack
+cd Bazzite-ClaudeDesktop
+
+# Optional: configure directories and container settings
+cp example.env .env
+$EDITOR .env
+
 ./setup.sh
 ```
 
@@ -55,9 +61,34 @@ Re-run the setup script — it will re-download and reinstall the latest `.deb` 
 
 ---
 
+## Configuration (`.env`)
+
+Copy `example.env` to `.env` and edit before running `setup.sh`. `.env` is excluded from git.
+
+| Variable | Default | Description |
+|---|---|---|
+| `CONTAINER_NAME` | `claude-desktop` | Distrobox container name |
+| `CONTAINER_IMAGE` | `ubuntu:24.04` | Container base image |
+| `MOUNT_DIRS` | `/mnt/git` | Space-separated list of host paths to mount and expose to Claude |
+
+**Example `.env` with multiple directories:**
+
+```bash
+CONTAINER_NAME="claude-desktop"
+CONTAINER_IMAGE="ubuntu:24.04"
+MOUNT_DIRS="/mnt/git /home/user/projects /mnt/data"
+```
+
+> **Note:** Directories are mounted at container creation time. If you add new directories after the container already exists, recreate it:
+> ```bash
+> distrobox rm claude-desktop && ./setup.sh
+> ```
+
+---
+
 ## MCP Configuration
 
-The default config at `~/.config/claude/claude_desktop_config.json` gives Claude read access to everything under `/mnt/git`:
+`setup.sh` generates `~/.config/claude/claude_desktop_config.json` automatically from your `MOUNT_DIRS` setting. With the default single-directory setup it looks like:
 
 ```json
 {
@@ -70,11 +101,22 @@ The default config at `~/.config/claude/claude_desktop_config.json` gives Claude
 }
 ```
 
-To add more paths, edit that file directly and restart Claude Desktop. See the [MCP filesystem server docs](https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem) for options.
+With multiple directories (e.g. `MOUNT_DIRS="/mnt/git /home/user/projects"`):
 
-> **Note:** The setup script will not overwrite an existing config. To reset to the template:
+```json
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/mnt/git", "/home/user/projects"]
+    }
+  }
+}
+```
+
+> **Note:** The setup script will not overwrite an existing config. To regenerate it from your current `MOUNT_DIRS`, delete the file and re-run:
 > ```bash
-> cp config/claude_desktop_config.json ~/.config/claude/claude_desktop_config.json
+> rm ~/.config/claude/claude_desktop_config.json && ./setup.sh
 > ```
 
 ---
@@ -160,8 +202,10 @@ Then refresh your app grid (log out/in or `killall gnome-shell` on GNOME).
 
 ```
 setup.sh                        # Run this on Bazzite to install everything
+example.env                     # Configuration template — copy to .env and edit
+.env                            # Your local config (git-ignored)
 scripts/install-in-container.sh # Runs inside the container (called by setup.sh)
-config/claude_desktop_config.json  # MCP config template
+config/claude_desktop_config.json  # MCP config reference (setup.sh generates the real one)
 tests/lint.sh                   # shellcheck + JSON validation
 hooks/pre-commit                # Git pre-commit hook (runs lint.sh)
 hooks/install-hooks.sh          # Wires hooks/ into .git/hooks/

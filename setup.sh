@@ -4,9 +4,22 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONTAINER_NAME="claude-desktop"
-CONTAINER_IMAGE="ubuntu:24.04"
-GIT_MOUNT="/mnt/git"
+
+# ---------------------------------------------------------------------------
+# Load .env (optional — copy example.env to .env and edit before running)
+# ---------------------------------------------------------------------------
+if [[ -f "${SCRIPT_DIR}/.env" ]]; then
+    # shellcheck source=/dev/null
+    source "${SCRIPT_DIR}/.env"
+fi
+
+# Defaults (can be overridden in .env)
+CONTAINER_NAME="${CONTAINER_NAME:-claude-desktop}"
+CONTAINER_IMAGE="${CONTAINER_IMAGE:-ubuntu:24.04}"
+MOUNT_DIRS="${MOUNT_DIRS:-/mnt/git}"
+
+# Split MOUNT_DIRS into an array on whitespace
+read -ra MOUNT_DIRS_ARRAY <<< "${MOUNT_DIRS}"
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -34,9 +47,11 @@ if ! command -v distrobox &>/dev/null; then
 fi
 info "distrobox found: $(command -v distrobox)"
 
-if [[ ! -d "${GIT_MOUNT}" ]]; then
-    warn "${GIT_MOUNT} does not exist — make sure it is mounted before launching Claude Desktop."
-fi
+for dir in "${MOUNT_DIRS_ARRAY[@]}"; do
+    if [[ ! -d "${dir}" ]]; then
+        warn "${dir} does not exist — make sure it is mounted before launching Claude Desktop."
+    fi
+done
 
 # ---------------------------------------------------------------------------
 # 2. Create Distrobox container (idempotent)
@@ -45,12 +60,21 @@ header "=== Distrobox container ==="
 
 if distrobox list 2>/dev/null | grep -q "${CONTAINER_NAME}"; then
     info "Container '${CONTAINER_NAME}' already exists — skipping creation."
+    warn "If you added new directories to MOUNT_DIRS, recreate the container:"
+    warn "  distrobox rm ${CONTAINER_NAME} && ./setup.sh"
 else
     info "Creating container '${CONTAINER_NAME}' (${CONTAINER_IMAGE})..."
+    info "Mounting directories: ${MOUNT_DIRS_ARRAY[*]}"
+
+    volume_args=()
+    for dir in "${MOUNT_DIRS_ARRAY[@]}"; do
+        volume_args+=(--volume "${dir}:${dir}")
+    done
+
     distrobox create \
         --name "${CONTAINER_NAME}" \
         --image "${CONTAINER_IMAGE}" \
-        --volume "${GIT_MOUNT}:${GIT_MOUNT}" \
+        "${volume_args[@]}" \
         --yes
     info "Container created."
 fi
@@ -77,9 +101,22 @@ mkdir -p "${MCP_CONFIG_DIR}"
 
 if [[ -f "${MCP_CONFIG_FILE}" ]]; then
     warn "MCP config already exists at ${MCP_CONFIG_FILE} — not overwriting."
-    warn "To reset to template: cp ${SCRIPT_DIR}/config/claude_desktop_config.json ${MCP_CONFIG_FILE}"
+    warn "To regenerate from current MOUNT_DIRS, delete it and re-run: ./setup.sh"
 else
-    cp "${SCRIPT_DIR}/config/claude_desktop_config.json" "${MCP_CONFIG_FILE}"
+    info "Generating MCP config with directories: ${MOUNT_DIRS_ARRAY[*]}"
+    python3 -c "
+import json, sys
+dirs = sys.argv[1:]
+config = {
+    'mcpServers': {
+        'filesystem': {
+            'command': 'npx',
+            'args': ['-y', '@modelcontextprotocol/server-filesystem'] + dirs
+        }
+    }
+}
+print(json.dumps(config, indent=2))
+" "${MOUNT_DIRS_ARRAY[@]}" > "${MCP_CONFIG_FILE}"
     info "MCP config installed to ${MCP_CONFIG_FILE}"
 fi
 
@@ -121,6 +158,7 @@ echo ""
 echo "  Container:      ${CONTAINER_NAME}"
 echo "  App launcher:   ${DESKTOP_FILE:-~/.local/share/applications/claude.desktop}"
 echo "  MCP config:     ${MCP_CONFIG_FILE}"
+echo "  Mounted dirs:   ${MOUNT_DIRS_ARRAY[*]}"
 echo "  Git hooks:      pre-commit (shellcheck + JSON lint)"
 echo ""
 echo "  Launch from terminal:"
