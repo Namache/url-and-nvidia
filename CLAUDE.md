@@ -29,6 +29,6 @@ When building or planning a new feature, the first step should be to build or up
 
 - All scripts must pass `shellcheck` with no warnings before committing (enforced by pre-commit hook and CI)
 - `setup.sh` and `install-in-container.sh` must remain idempotent — safe to re-run
-- The Claude Desktop `.deb` download URL is a variable at the top of `scripts/install-in-container.sh` (`CLAUDE_DEB_URL`) — update it there if the URL changes
+- Claude Desktop is installed via the community APT repo (`aaddrick/claude-desktop-debian`); the repo URL is a variable at the top of `scripts/install-in-container.sh` — update it there if the source changes
 - Do not overwrite `~/.config/claude/claude_desktop_config.json` if it already exists (user may have customized it)
 - The git hooks in `hooks/` are wired up by `hooks/install-hooks.sh`, which is called by `setup.sh`

@@ -22,11 +22,12 @@ fail() { echo -e "  ${RED}FAIL${NC}  $1"; FAIL=$((FAIL + 1)); }
 echo "=== Shell scripts (shellcheck) ==="
 
 if ! command -v shellcheck &>/dev/null; then
-    echo "shellcheck not found. Install it:"
-    echo "  Bazzite/Fedora: sudo rpm-ostree install ShellCheck"
-    echo "  Ubuntu/Debian:  sudo apt-get install shellcheck"
-    exit 1
-fi
+    echo "  [SKIP] shellcheck not found — shell linting skipped."
+    echo "         Install it to enable local checks:"
+    echo "           Bazzite/Fedora: sudo rpm-ostree install ShellCheck"
+    echo "           Ubuntu/Debian:  sudo apt-get install shellcheck"
+    echo "         CI enforces shellcheck on merge to main."
+else
 
 while IFS= read -r -d '' sh_file; do
     rel="${sh_file#"${REPO_ROOT}/"}"
@@ -49,6 +50,8 @@ while IFS= read -r -d '' hook_file; do
         fi
     fi
 done < <(find "${REPO_ROOT}/hooks" -type f -not -name "*.sh" -print0 2>/dev/null || true)
+
+fi # end shellcheck block
 
 # ---------------------------------------------------------------------------
 # JSON validation

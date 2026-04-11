@@ -93,9 +93,15 @@ INSTALL_SCRIPT_TMP="${HOME}/.cache/claude-desktop-install.sh"
 mkdir -p "${HOME}/.cache"
 cp "${INSTALL_SCRIPT}" "${INSTALL_SCRIPT_TMP}"
 info "Running install script inside '${CONTAINER_NAME}'..."
-distrobox enter --name "${CONTAINER_NAME}" -- bash "${INSTALL_SCRIPT_TMP}"
+if distrobox enter --name "${CONTAINER_NAME}" -- bash "${INSTALL_SCRIPT_TMP}"; then
+    info "In-container install complete."
+else
+    warn "Install script exited with an error — Claude Desktop may not be installed."
+    warn "Common cause: the .deb download URL has changed. Check CLAUDE_DEB_URL in:"
+    warn "  ${SCRIPT_DIR}/scripts/install-in-container.sh"
+    warn "Continuing with the rest of setup (MCP config, desktop integration)..."
+fi
 rm -f "${INSTALL_SCRIPT_TMP}"
-info "In-container install complete."
 
 # ---------------------------------------------------------------------------
 # 4. MCP configuration — merge-safe update

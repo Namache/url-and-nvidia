@@ -21,7 +21,7 @@ Installs [Claude Desktop](https://claude.ai/download) on [Bazzite](https://bazzi
 ## Setup
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/tpfirman/Bazzite-ClaudeDesktop.git
 cd Bazzite-ClaudeDesktop
 
 # Optional: configure directories and container settings
@@ -33,10 +33,10 @@ $EDITOR .env
 
 That's it. The script will:
 
-1. Create an Ubuntu 24.04 Distrobox container named `claude-desktop` with `/mnt/git` mounted
-2. Install Claude Desktop (`.deb`) and its dependencies inside the container
+1. Create an Ubuntu 24.04 Distrobox container named `claude-desktop` with your configured directories mounted
+2. Install Claude Desktop via the [community APT repository](https://github.com/aaddrick/claude-desktop-debian) and its dependencies
 3. Install Node.js LTS and the MCP filesystem server (`@modelcontextprotocol/server-filesystem`)
-4. Copy the MCP config to `~/.config/claude/claude_desktop_config.json` (skipped if it already exists)
+4. Write `~/.config/claude/claude_desktop_config.json` — creating it on first run, updating only the `filesystem` entry on subsequent runs
 5. Export the app to your host desktop (app grid + `.desktop` launcher)
 6. Patch the launcher for Wayland
 7. Install the git pre-commit hook (shell + JSON linting)
