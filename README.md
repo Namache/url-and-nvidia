@@ -1,5 +1,7 @@
 # Claude Desktop on Bazzite Linux
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 Installs [Claude Desktop](https://claude.ai/download) on [Bazzite](https://bazzite.gg/) (an immutable Fedora-based gaming/desktop OS) using a [Distrobox](https://distrobox.it/) container. Because Bazzite's host filesystem is read-only, the app runs inside an Ubuntu 24.04 container and is exported to the host desktop via `distrobox-export`.
 
 **Features**
@@ -257,12 +259,22 @@ Then refresh your app grid (log out/in or `killall gnome-shell` on GNOME).
 
 ---
 
+## Contributing
+
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow.
+
+This project is heavily AI-assisted ("vibe coded"), but every change is human-reviewed and tested on real hardware before merging. All pull requests require human review and approval.
+
+---
+
 ## Repo Structure
 
 ```
 setup.sh                                    # Run this on Bazzite to install everything
 example.env                                 # Config template — copy to .env and edit
 .env                                        # Your local config (git-ignored)
+LICENSE                                     # MIT license
+CONTRIBUTING.md                             # Contribution guidelines
 config/claude_desktop_config.example.json   # MCP config reference template
 config/claude_desktop_config.json           # Local MCP config override (git-ignored)
 scripts/install-in-container.sh             # Runs inside the container (called by setup.sh)
@@ -270,4 +282,5 @@ tests/lint.sh                               # shellcheck + JSON validation
 hooks/pre-commit                            # Git pre-commit hook (runs lint.sh)
 hooks/install-hooks.sh                      # Wires hooks/ into .git/hooks/
 .github/workflows/ci.yml                    # CI: lint on push/PR to main
+.github/ISSUE_TEMPLATE/                     # GitHub issue templates
 ```

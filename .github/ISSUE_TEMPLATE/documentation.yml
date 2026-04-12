@@ -1,0 +1,32 @@
+name: Documentation
+description: Something is unclear, missing, or wrong in the docs
+labels: ["documentation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this to report gaps, errors, or improvements to README, CONTRIBUTING, or other docs.
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What is unclear or missing?
+      description: Describe the documentation problem.
+    validations:
+      required: true
+
+  - type: input
+    id: location
+    attributes:
+      label: Where does it appear (or should appear)?
+      description: File name and section, e.g. `README.md — Troubleshooting`
+    validations:
+      required: false
+
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested content or correction
+      description: If you have a specific fix or wording in mind, put it here.
+    validations:
+      required: false

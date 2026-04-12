@@ -1,0 +1,40 @@
+name: Improvement
+description: Existing behaviour that could be better
+labels: ["improvement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for changes to existing functionality — not bugs, not new features.
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What should be improved?
+      description: Describe the area or behaviour you want to improve.
+    validations:
+      required: true
+
+  - type: textarea
+    id: current
+    attributes:
+      label: Current behaviour
+      description: How does it work today?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed
+    attributes:
+      label: Proposed improvement
+      description: How should it work instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: Why is this worth changing?
+    validations:
+      required: false
