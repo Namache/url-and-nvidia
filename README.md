@@ -1,6 +1,6 @@
 # Claude Desktop on Bazzite Linux
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![Lint](https://github.com/tpfirman/Bazzite-ClaudeDesktop/actions/workflows/ci.yml/badge.svg)](https://github.com/tpfirman/Bazzite-ClaudeDesktop/actions/workflows/ci.yml)
 
 Installs [Claude Desktop](https://claude.ai/download) on [Bazzite](https://bazzite.gg/) (an immutable Fedora-based gaming/desktop OS) using a [Distrobox](https://distrobox.it/) container. Because Bazzite's host filesystem is read-only, the app runs inside an Ubuntu 24.04 container and is exported to the host desktop via `distrobox-export`.
 
